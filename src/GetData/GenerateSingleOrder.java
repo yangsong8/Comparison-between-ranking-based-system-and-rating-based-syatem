@@ -64,6 +64,7 @@ public class GenerateSingleOrder {
 		
 //		EzTasks = tran_query_into_array(Driver.myStat.executeQuery(sql1), "id");
 //		RankCid = tran_query_into_array(Driver.myStat.executeQuery(sql2), "id");
+		// Yang: you should try to query all the reviewer ids from a specific task, right?		
 		RankAssessor = tran_query_into_array(myStat.executeQuery(sql3), "assessor_actor_id");
 //		System.out.println(RankAssessor);
 		
