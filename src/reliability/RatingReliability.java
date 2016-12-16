@@ -74,6 +74,7 @@ public class RatingReliability {
 		double reliability = 0;
 		HashMap<String, String> tmp = single.get(asr);
 		System.out.println(tmp);
+		double allTuple = 0;
 		if(tmp.size() > 1){
 			
 			String[] tuple = tmp.keySet().toArray(new String[tmp.size()]);
@@ -89,21 +90,22 @@ public class RatingReliability {
 					}
 				}
 			}
-			double allTuple = ((tuple.length-1)*tuple.length)/2;
-			return reliability/allTuple;
-		} else {
-			return 0.5;
+			allTuple = ((tuple.length-1)*tuple.length)/2;
 		}
+		return reliability/allTuple;
 	}
 	
 	public double avgReliabilityForAll(){
-		double avgReliab = 0, num_Asr = Ase.size();
+		double avgReliab = 0, i = 0;
 		for(String asr : Ase){
-			double tmp = reliabPerAsr(asr);
-			System.out.println("Assessor: " + asr + " has the reliability :" + tmp);
-			avgReliab += tmp;
+			if(single.get(asr).size() > 1){
+				double tmp = reliabPerAsr(asr);
+				System.out.println("Assessor: " + asr + " has the reliability :" + tmp);
+				avgReliab += tmp;
+				i++;
+			}
 		}
-		return avgReliab/num_Asr;
+		return avgReliab/i;
 	}
 	
 	//Helper function: turn resultSet into array given a attribute field.
@@ -136,7 +138,7 @@ public class RatingReliability {
 	public static void main(String[] args) {
 		String TaskID = "EZ-00001663";
 		RatingReliability r = new RatingReliability(TaskID);
-		System.out.println("Average reliability of rating-based System :" + r.avgReliabilityForAll());
+		System.out.println("Average reliability of rating-based System on task: " + TaskID+ " is " + r.avgReliabilityForAll());
 		//System.out.println(r.avgReliabilityForAll());
 	}
 
