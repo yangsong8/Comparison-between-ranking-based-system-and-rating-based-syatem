@@ -46,6 +46,7 @@ public class AllRankingTasks {
 
 	public void reliability(){
 		double sum = 0;
+		// each string in rankTask is a task_id (for review phase) in Critviz
 		for(String x : rankTask){
 			RankingReliability r = new RankingReliability(x);
 			sum += r.avgReliabilityForAll();

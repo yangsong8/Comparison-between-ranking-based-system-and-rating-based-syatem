@@ -12,6 +12,7 @@ import java.util.HashMap;
 //* Calculation of reliability per Task of the ranking based system(Critviz).
 //* Tested with Create_in_task_id = 'CV-00000015';
 
+// this class should be named RankingTaskReliabilityCalculator
 public class RankingReliability {
 	
 	public Statement myStat;
