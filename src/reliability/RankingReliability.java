@@ -17,12 +17,13 @@ public class RankingReliability {
 	
 	public Statement myStat;
 	
-	public HashMap<String, HashMap<String, String>> single;
-	public ArrayList<String> allAssessors;
-	public HashMap<String, String> globe;
+	public HashMap<String, HashMap<String, String>> single;// an Hash with <assessor_id, {<assessee_id, rank>}>
+	public ArrayList<String> allAssessors; // all the assessors in this task
+	public HashMap<String, String> globe; // an Hash with <assessee_id, avg(rank)>
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
 
+	//constructor method, create AllRankingTasks obj with a task id.
 	public RankingReliability(String TaskID) {		
 		Driver();
 		this.allAssessors(TaskID);
@@ -42,6 +43,7 @@ public class RankingReliability {
 		}
 	}
 	
+	//set get all the assessors in this task and add them to allAssessors array.
 	public void allAssessors(String TaskID){
 		this.allAssessors = new ArrayList<>();
 		String sql1 = "select DISTINCT assessor_actor_id from answer where create_in_task_id='"+ TaskID +"' and rank is not null";
@@ -53,7 +55,6 @@ public class RankingReliability {
 	}
 	
 	//Generate a map of assessor--->(assesee, rank).
-	
 	public void singleOrder(String TaskID) {
 		this.single = new HashMap<>(); 
 		try {	
@@ -67,8 +68,8 @@ public class RankingReliability {
 		}
 	}
 	
-	//Generate a map of globally assessee--->avg(rank).
-	
+	//Generate a map of globally assessee--->avg(rank) and put the hashmap globe. 
+	// The entries in globe are not sorted here.
 	public void globalOrder(String TaskID){
 		this.globe = new HashMap<>();
 		String sql1 = "select assessee_actor_id, avg(rank) from answer where create_in_task_id='"+ TaskID +"' and rank is not null group by assessee_actor_id";
@@ -77,12 +78,10 @@ public class RankingReliability {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		//System.out.println(globe);
 	}
 	
 	//Get the reliability per Assessor.
-	
-	public double reliabPerAsr(String asr){
+	public double getReliabilityForAssessor(String asr){
 		double reliability = 0;
 		HashMap<String, String> tmp = single.get(asr);
 		String[] tuple = tmp.keySet().toArray(new String[tmp.size()]);
@@ -110,9 +109,11 @@ public class RankingReliability {
 	public double avgReliabilityForAll(){
 		double sumReliability = 0, assessorNum = allAssessors.size();
 		for(String assessor : allAssessors){
-			double tmp = reliabPerAsr(assessor);
-			sumReliability += tmp;
+			//get review reliability for current assessor
+			double tmp = getReliabilityForAssessor(assessor);
 			System.out.println("Assessor: " + assessor + " 's reliability is " + tmp);
+			//add the reliability of current assessor to the total.
+			sumReliability += tmp;
 		}	
 		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
 		return sumReliability/assessorNum;

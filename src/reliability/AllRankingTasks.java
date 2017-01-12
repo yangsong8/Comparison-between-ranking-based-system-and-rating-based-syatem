@@ -70,10 +70,5 @@ public class AllRankingTasks {
 		}
 			return newArray;	
 	}
-	
-	public static void main(String[] args) {
-		AllRankingTasks rank = new AllRankingTasks();
-		rank.reliability();
-	}
 
 }
