@@ -18,14 +18,14 @@ public class RankingReliability {
 	public Statement myStat;
 	
 	public HashMap<String, HashMap<String, String>> single;
-	public ArrayList<String> Ase;
+	public ArrayList<String> allAssessors;
 	public HashMap<String, String> globe;
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
 
 	public RankingReliability(String TaskID) {		
 		Driver();
-		this.allAssessor(TaskID);
+		this.allAssessors(TaskID);
 		this.globalOrder(TaskID);
 		this.singleOrder(TaskID);
 		
@@ -42,11 +42,11 @@ public class RankingReliability {
 		}
 	}
 	
-	public void allAssessor(String TaskID){
-		this.Ase = new ArrayList<>();
+	public void allAssessors(String TaskID){
+		this.allAssessors = new ArrayList<>();
 		String sql1 = "select DISTINCT assessor_actor_id from answer where create_in_task_id='"+ TaskID +"' and rank is not null";
 		try {
-			Ase = tran_query_into_array(myStat.executeQuery(sql1), "assessor_actor_id");
+			allAssessors = tran_query_into_array(myStat.executeQuery(sql1), "assessor_actor_id");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -57,7 +57,7 @@ public class RankingReliability {
 	public void singleOrder(String TaskID) {
 		this.single = new HashMap<>(); 
 		try {	
-			for(String ase : Ase){
+			for(String ase : allAssessors){
 				String sql2 = "select assessee_actor_id, rank from answer where create_in_task_id='"+ TaskID +"' and rank is not null and assessor_actor_id='" + ase + "'";
 				HashMap<String, String> temp = tran_query_into_map(myStat.executeQuery(sql2)); 
 				single.put(ase, temp);
@@ -108,14 +108,14 @@ public class RankingReliability {
 	
 	//Generate reliability for the list of all assessors.
 	public double avgReliabilityForAll(){
-		double reliab = 0, Ase_num = Ase.size();
-		for(String ase : Ase){
-			double tmp = reliabPerAsr(ase);
-			reliab += tmp;
-			System.out.println("Assessor: " + ase + " 's reliability is " + tmp);
+		double sumReliability = 0, assessorNum = allAssessors.size();
+		for(String assessor : allAssessors){
+			double tmp = reliabPerAsr(assessor);
+			sumReliability += tmp;
+			System.out.println("Assessor: " + assessor + " 's reliability is " + tmp);
 		}	
-		System.out.println("Total reliability on average for ranking based system on this task is " + reliab/Ase_num);
-		return reliab/Ase_num;
+		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
+		return sumReliability/assessorNum;
 	} 
 	
 	//Helper function: turn resultSet into array given a attribute field.
