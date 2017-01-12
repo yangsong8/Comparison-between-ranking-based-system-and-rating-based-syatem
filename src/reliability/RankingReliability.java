@@ -54,7 +54,7 @@ public class RankingReliability {
 		}
 	}
 	
-	//Generate a map of assessor--->(assesee, rank).
+	//For each assessor in a task, generate a map of assessor--->(assesee, rank).
 	public void singleOrder(String TaskID) {
 		this.single = new HashMap<>(); 
 		try {	
@@ -81,28 +81,28 @@ public class RankingReliability {
 	}
 	
 	//Get the reliability per Assessor.
-	public double getReliabilityForAssessor(String asr){
-		double reliability = 0;
-		HashMap<String, String> tmp = single.get(asr);
-		String[] tuple = tmp.keySet().toArray(new String[tmp.size()]);
+	//return the percentage of total tuples which agree with the global ranking.
+	public double getReliabilityForAssessor(String assessorId){
+		double numMachingTuples = 0;
+		// get all the ranking records done by this assessor
+		HashMap<String, String> reviewRecords = single.get(assessorId); 
+		String[] assessees = reviewRecords.keySet().toArray(new String[reviewRecords.size()]);
 		
-		System.out.println(tmp);
-		
-		for(int i = 0; i < tuple.length-1; i++){
+		for(int i = 0; i < assessees.length-1; i++){
 			//System.out.println(tuple[i] + "--->" + globe.get(tuple[i]));
-			for(int j = i+1; j < tuple.length; j++){
+			for(int j = i+1; j < assessees.length; j++){
 
-				Integer a1_l = Integer.valueOf(tmp.get(tuple[i])), a2_l = Integer.valueOf(tmp.get(tuple[j]));
-				Double a1_g = Double.parseDouble(globe.get(tuple[i])), a2_g = Double.parseDouble(globe.get(tuple[j]));
+				Integer a1_l = Integer.valueOf(reviewRecords.get(assessees[i])), a2_l = Integer.valueOf(reviewRecords.get(assessees[j]));
+				Double a1_g = Double.parseDouble(globe.get(assessees[i])), a2_g = Double.parseDouble(globe.get(assessees[j]));
 				
 				if((a1_l > a2_l && a1_g > a2_g) || (a1_l < a2_l && a1_g < a2_g )){
-					reliability += 1;
+					numMachingTuples += 1;
 				}
 			}
 		}
 		
-		double allTuple = (tuple.length * (tuple.length-1))/2;
-		return reliability/allTuple;
+		double numTuplesTotal = (assessees.length * (assessees.length-1))/2;
+		return numMachingTuples/numTuplesTotal;
 	}
 	
 	//Generate reliability for the list of all assessors.
