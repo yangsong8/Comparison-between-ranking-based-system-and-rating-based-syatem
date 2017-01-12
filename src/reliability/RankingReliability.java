@@ -23,7 +23,6 @@ public class RankingReliability {
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
 
-	
 	public RankingReliability(String TaskID) {		
 		Driver();
 		this.allAssessor(TaskID);
@@ -108,7 +107,6 @@ public class RankingReliability {
 	}
 	
 	//Generate reliability for the list of all assessors.
-	
 	public double avgReliabilityForAll(){
 		double reliab = 0, Ase_num = Ase.size();
 		for(String ase : Ase){
@@ -116,7 +114,7 @@ public class RankingReliability {
 			reliab += tmp;
 			System.out.println("Assessor: " + ase + " 's reliability is " + tmp);
 		}	
-		System.out.println("Total reliability on average for ranking based system on task 'CV-00000015' is " + reliab/Ase_num);
+		System.out.println("Total reliability on average for ranking based system on this task is " + reliab/Ase_num);
 		return reliab/Ase_num;
 	} 
 	
@@ -147,11 +145,13 @@ public class RankingReliability {
 	}
 	
 	public static void main(String[] args) {
-//		String TaskID = "CV-00000015";
+
 		AllRankingTasks allRank = new AllRankingTasks();
+		// get all the task id with "ranking" as review type.
 		for(String s : allRank.rankTask){
 			RankingReliability x = new RankingReliability(s);
 			System.out.println("Task ID is: " + s);
+			//calculate the overall ranking reliability for this ranking task and out put.
 			x.avgReliabilityForAll();
 			System.out.println("---------------------------------------------------------------------");
 		}
