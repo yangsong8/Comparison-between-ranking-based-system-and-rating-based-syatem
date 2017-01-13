@@ -7,8 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.LinkedHashMap;
 
-//* Author: Yifan Guo
+//* Author: Yifan Guo, Yang Song
 //* Calculation of reliability per Task of the ranking based system(Critviz).
 //* Tested with Create_in_task_id = 'CV-00000015';
 
@@ -19,9 +21,10 @@ public class RankingReliability {
 	
 	public HashMap<String, HashMap<String, String>> single;// an Hash with <assessor_id, {<assessee_id, rank>}>
 	public ArrayList<String> allAssessors; // all the assessors in this task
-	public HashMap<String, String> globe; // an Hash with <assessee_id, avg(rank)>
+	public LinkedHashMap<String, String> globe; // an Hash with <assessee_id, avg(rank)>
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
+	private ArrayList<String> globalRankingForTask; //global ranking of the assessees, from high to low.
 
 	//constructor method, create AllRankingTasks obj with a task id.
 	public RankingReliability(String TaskID) {		
@@ -69,16 +72,26 @@ public class RankingReliability {
 	}
 	
 	//Generate a map of globally assessee--->avg(rank) and put the hashmap globe. 
-	// The entries in globe are not sorted here.
+	// The entries in globe are sorted here -> order by avg(rank) DESC
 	public void globalOrder(String TaskID){
-		this.globe = new HashMap<>();
-		String sql1 = "select assessee_actor_id, avg(rank) from answer where create_in_task_id='"+ TaskID +"' and rank is not null group by assessee_actor_id";
+		this.globe = new LinkedHashMap<>();
+		String sql1 = "select assessee_actor_id, avg(rank) from answer where create_in_task_id='"+ TaskID +"' and rank is not null group by assessee_actor_id order by avg(rank) DESC";
 		try {
 			globe = tran_query_into_map(myStat.executeQuery(sql1));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println(globe);
+		this.globalRankingForTask = new ArrayList<String>();
+		for ( String key : globe.keySet() ) {
+			globalRankingForTask.add(key);
+		}
+		
+		System.out.println(globalRankingForTask);
 	}
+	
+
 	
 	//Get the reliability per Assessor.
 	//return the percentage of total tuples which agree with the global ranking.
@@ -133,10 +146,11 @@ public class RankingReliability {
 	}
 	
 	//Helper function: turn resultSet into map given a <key, value> set.	
-	private HashMap<String,String> tran_query_into_map(ResultSet result) {
-		HashMap<String, String> newMap = new HashMap<String, String>();
+	private LinkedHashMap<String,String> tran_query_into_map(ResultSet result) {
+		LinkedHashMap<String, String> newMap = new LinkedHashMap<String, String>();
 		try{	
 		   	while(result.next()){
+		   		System.out.println(result);
 				newMap.put(result.getString(1), result.getString(2));
 			}
 		} catch(Exception e){
