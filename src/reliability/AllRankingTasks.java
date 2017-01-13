@@ -50,7 +50,7 @@ public class AllRankingTasks {
 		// this loop go through all the tasks in rankTask and calculate the overall ranking reliability.
 		for(String x : rankTask){
 			RankingReliability r = new RankingReliability(x);
-			sum += r.avgReliabilityForAll();
+			sum += r.avgReliabilityForAll(1);
 		}
 		System.out.println("---------------------------------");
 		System.out.println((double)sum/rankTask.size());

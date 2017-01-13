@@ -82,20 +82,20 @@ public class RankingReliability {
 			e.printStackTrace();
 		}
 		
-		System.out.println(globe);
+		//sort all the assessees and put the assessee_ids in order (high to low)
 		this.globalRankingForTask = new ArrayList<String>();
 		for ( String key : globe.keySet() ) {
 			globalRankingForTask.add(key);
 		}
 		
-		System.out.println(globalRankingForTask);
 	}
 	
 
 	
 	//Get the reliability per Assessor.
+	//Alg. 1: percentage of matched tuples
 	//return the percentage of total tuples which agree with the global ranking.
-	public double getReliabilityForAssessor(String assessorId){
+	public double getReliabilityForAssessorAlgo1(String assessorId){
 		double numMachingTuples = 0;
 		// get all the ranking records done by this assessor
 		HashMap<String, String> reviewRecords = single.get(assessorId); 
@@ -118,15 +118,47 @@ public class RankingReliability {
 		return numMachingTuples/numTuplesTotal;
 	}
 	
+	//Get the reliability per Assessor.
+	//Alg. 2: sum(diff rankings_matching ^2)/sum(diff ranking_all tuples ^2)
+	public double getReliabilityForAssessorAlgo2(String assessorId){
+		double diffRankingSquaresMachingTuples = 0, diffRankingSquaresAllTuples = 0;
+		// get all the ranking records done by this assessor
+		HashMap<String, String> reviewRecords = single.get(assessorId); 
+		String[] assessees = reviewRecords.keySet().toArray(new String[reviewRecords.size()]);
+		
+		for(int i = 0; i < assessees.length-1; i++){
+			//System.out.println(tuple[i] + "--->" + globe.get(tuple[i]));
+			for(int j = i+1; j < assessees.length; j++){
+
+				Integer a1_l = Integer.valueOf(reviewRecords.get(assessees[i])), a2_l = Integer.valueOf(reviewRecords.get(assessees[j]));
+				Double a1_g = Double.parseDouble(globe.get(assessees[i])), a2_g = Double.parseDouble(globe.get(assessees[j]));
+				
+				int diffRankingInGlobal = (globalRankingForTask.indexOf(assessees[i])) - (globalRankingForTask.indexOf(assessees[j]));
+				diffRankingSquaresAllTuples += diffRankingInGlobal * diffRankingInGlobal;
+				
+				if((a1_l > a2_l && a1_g > a2_g) || (a1_l < a2_l && a1_g < a2_g )){
+					diffRankingSquaresMachingTuples += diffRankingInGlobal * diffRankingInGlobal;
+				}
+			}
+		}
+		
+		return diffRankingSquaresMachingTuples/diffRankingSquaresAllTuples;
+	}
+	
 	//Generate reliability for the list of all assessors.
-	public double avgReliabilityForAll(){
-		double sumReliability = 0, assessorNum = allAssessors.size();
+	public double avgReliabilityForAll(int algoIndex){
+		double sumReliability = 0, assessorNum = allAssessors.size(), reliability = 0;
 		for(String assessor : allAssessors){
 			//get review reliability for current assessor
-			double tmp = getReliabilityForAssessor(assessor);
-			System.out.println("Assessor: " + assessor + " 's reliability is " + tmp);
+			if (algoIndex == 1){
+				reliability = getReliabilityForAssessorAlgo1(assessor);
+			}
+			else{
+				reliability = getReliabilityForAssessorAlgo2(assessor);
+			}
+			System.out.println("Assessor: " + assessor + " 's reliability is " + reliability);
 			//add the reliability of current assessor to the total.
-			sumReliability += tmp;
+			sumReliability += reliability;
 		}	
 		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
 		return sumReliability/assessorNum;
@@ -150,7 +182,6 @@ public class RankingReliability {
 		LinkedHashMap<String, String> newMap = new LinkedHashMap<String, String>();
 		try{	
 		   	while(result.next()){
-		   		System.out.println(result);
 				newMap.put(result.getString(1), result.getString(2));
 			}
 		} catch(Exception e){
@@ -166,8 +197,8 @@ public class RankingReliability {
 		for(String s : allRank.rankTask){
 			RankingReliability x = new RankingReliability(s);
 			System.out.println("Task ID is: " + s);
-			//calculate the overall ranking reliability for this ranking task and out put.
-			x.avgReliabilityForAll();
+			//calculate the overall ranking reliability for this ranking task and out put. Parameter should either be 1 or 2 depending on which algo. to use
+			x.avgReliabilityForAll(2);
 			System.out.println("---------------------------------------------------------------------");
 		}
 	}
