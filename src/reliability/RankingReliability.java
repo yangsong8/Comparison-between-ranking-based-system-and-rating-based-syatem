@@ -158,6 +158,7 @@ public class RankingReliability {
 				reliability = getReliabilityForAssessorAlgo2(assessor);
 			}
 			//out put the reliability for each individual to a file.
+			// Format: taskid, assessorid, reliability, algorithm (1 or 2)
 			output.println(this.taskId + ',' + assessor + "," + reliability + "," + algoIndex);
 
 			//System.out.println("Assessor: " + assessor + " 's reliability is " + reliability);
