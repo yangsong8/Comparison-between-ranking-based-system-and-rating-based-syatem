@@ -197,7 +197,7 @@ public class RankingReliability {
 	
 	public static void main(String[] args) {
 
-		AllRankingTasks allRank = new AllRankingTasks();
+		AllTasks allRank = new AllTasks();
 		
 		//create output stream
 		try{

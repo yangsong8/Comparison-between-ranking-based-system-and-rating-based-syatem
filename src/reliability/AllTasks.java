@@ -7,6 +7,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+//* Author: Yifan Guo, Yang Song
+// Get all the task_ids of different type.
+// Currently we got only ranking and rating, each of them got one system, 
+// but will be extended in the future.
+
 public class AllTasks {
 	
 	public Statement myStat;
