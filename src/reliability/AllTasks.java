@@ -7,16 +7,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-public class AllRankingTasks {
+public class AllTasks {
 	
 	public Statement myStat;
 	
 	public ArrayList<String> rankTask;
+	public ArrayList<String> rateTask;
 	public ArrayList<Double> reliabilityPerTask;
 	
-	public AllRankingTasks() {
+	public AllTasks() {
 		this.Driver();
-		this.allTaskID();
+		this.getAllTaskID("ranking");
+		this.getAllTaskID("ranking");
 	}
 
 	// This is a bad naming. Should be "setDBConnection"
@@ -34,11 +36,26 @@ public class AllRankingTasks {
 	
 	// should be named "getAllRankingTaskID"
 	// get all the task_id in answer table related to Critviz
-	private void allTaskID() {
+	private void getAllTaskID(String taskType) {
+		String systemNames;
+		// there will be more than 1 system for each type. So I put them in Parentheses.
+		// E.g. the systems can be ('Critviz', 'MobiusSLIP') for ranking in the future.  --Yang
+		if (taskType.equals("ranking")){
+			systemNames = "('CritViz')";
+		}
+		else{//rating
+			systemNames = "('Expertiza')";
+		}
+		
 		this.rankTask = new ArrayList<>();
-		String sql1 = "select DISTINCT create_in_task_id from answer where rank is not null and create_in_task_id in (select id from task where app_name='CritViz')";
+		String sql1 = "select DISTINCT create_in_task_id from answer where rank is not null and create_in_task_id in (select id from task where app_name in "+ systemNames +" )";
 		try {
-			rankTask = tran_query_into_array(myStat.executeQuery(sql1), "create_in_task_id");
+			if (taskType.equals("ranking")){
+				rankTask = tran_query_into_array(myStat.executeQuery(sql1), "create_in_task_id");
+			}
+			else{//rating
+				rateTask = tran_query_into_array(myStat.executeQuery(sql1), "create_in_task_id");
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
