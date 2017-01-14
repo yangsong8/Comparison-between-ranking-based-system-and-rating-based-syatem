@@ -42,20 +42,7 @@ public class AllRankingTasks {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void reliability(){
-		double sum = 0;
-		// each string in rankTask is a task_id (for review phase) in Critviz
-		// this loop go through all the tasks in rankTask and calculate the overall ranking reliability.
-		for(String x : rankTask){
-			RankingReliability r = new RankingReliability(x);
-			sum += r.avgReliabilityForAll(1);
-		}
-		System.out.println("---------------------------------");
-		System.out.println((double)sum/rankTask.size());
-	}
-	
+	}	
 	
 	//Helper function: turn resultSet into array (of Strings) given an attribute field.
 	private ArrayList<String> tran_query_into_array(ResultSet result, String string_to_get) {

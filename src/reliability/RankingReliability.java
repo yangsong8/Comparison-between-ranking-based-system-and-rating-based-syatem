@@ -1,5 +1,6 @@
 package reliability;
 
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -7,8 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.LinkedHashMap;
+
+
 
 //* Author: Yifan Guo, Yang Song
 //* Calculation of reliability per Task of the ranking based system(Critviz).
@@ -25,14 +27,16 @@ public class RankingReliability {
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
 	private ArrayList<String> globalRankingForTask; //global ranking of the assessees, from high to low.
+	private String taskId;
+	private static PrintStream output ;
 
 	//constructor method, create AllRankingTasks obj with a task id.
-	public RankingReliability(String TaskID) {		
+	public RankingReliability(String taskID) {		
 		Driver();
-		this.allAssessors(TaskID);
-		this.globalOrder(TaskID);
-		this.singleOrder(TaskID);
-		
+		this.allAssessors(taskID);
+		this.globalOrder(taskID);
+		this.singleOrder(taskID);
+		taskId = taskID;
 	}
 	
 	public void Driver(){
@@ -87,10 +91,7 @@ public class RankingReliability {
 		for ( String key : globe.keySet() ) {
 			globalRankingForTask.add(key);
 		}
-		
 	}
-	
-
 	
 	//Get the reliability per Assessor.
 	//Alg. 1: percentage of matched tuples
@@ -145,7 +146,7 @@ public class RankingReliability {
 		return diffRankingSquaresMachingTuples/diffRankingSquaresAllTuples;
 	}
 	
-	//Generate reliability for the list of all assessors.
+	//Generate average reliability for the list of all assessors in a task.
 	public double avgReliabilityForAll(int algoIndex){
 		double sumReliability = 0, assessorNum = allAssessors.size(), reliability = 0;
 		for(String assessor : allAssessors){
@@ -156,7 +157,10 @@ public class RankingReliability {
 			else{
 				reliability = getReliabilityForAssessorAlgo2(assessor);
 			}
-			System.out.println("Assessor: " + assessor + " 's reliability is " + reliability);
+			//out put the reliability for each individual to a file.
+			output.println(this.taskId + ',' + assessor + "," + reliability + "," + algoIndex);
+
+			//System.out.println("Assessor: " + assessor + " 's reliability is " + reliability);
 			//add the reliability of current assessor to the total.
 			sumReliability += reliability;
 		}	
@@ -193,14 +197,25 @@ public class RankingReliability {
 	public static void main(String[] args) {
 
 		AllRankingTasks allRank = new AllRankingTasks();
+		
+		//create output stream
+		try{
+			File file = new File("ranking_output.csv");
+			output = new PrintStream(file);
+		} catch (IOException e) {
+		}
+		
 		// get all the task id with "ranking" as review type.
 		for(String s : allRank.rankTask){
 			RankingReliability x = new RankingReliability(s);
 			System.out.println("Task ID is: " + s);
 			//calculate the overall ranking reliability for this ranking task and out put. Parameter should either be 1 or 2 depending on which algo. to use
-			x.avgReliabilityForAll(2);
+			Double reliabilityAlgo1 = x.avgReliabilityForAll(1);
+			Double reliabilityAlog2 = x.avgReliabilityForAll(2);
+			
 			System.out.println("---------------------------------------------------------------------");
 		}
+		System.out.println("done.");
 	}
 
 }
