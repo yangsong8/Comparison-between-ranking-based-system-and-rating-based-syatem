@@ -1,5 +1,6 @@
 package reliability;
 
+import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -7,28 +8,35 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
-//* Author: Yifan Guo
+
+
+//* Author: Yifan Guo, Yang Song
 //* Calculation of reliability per Task of the ranking based system(Critviz).
 //* Tested with Create_in_task_id = 'CV-00000015';
 
+// this class should be named RankingTaskReliabilityCalculator
 public class RankingReliability {
 	
 	public Statement myStat;
 	
-	public HashMap<String, HashMap<String, String>> single;
-	public ArrayList<String> Ase;
-	public HashMap<String, String> globe;
+	public HashMap<String, HashMap<String, String>> single;// an Hash with <assessor_id, {<assessee_id, rank>}>
+	public ArrayList<String> allAssessors; // all the assessors in this task
+	public LinkedHashMap<String, String> globe; // an Hash with <assessee_id, avg(rank)>
 	public ArrayList<String> rankTask;
 	public ArrayList<Double> reliabilityPerTask;
+	private ArrayList<String> globalRankingForTask; //global ranking of the assessees, from high to low.
+	private String taskId;
+	private static PrintStream output ;
 
-	
-	public RankingReliability(String TaskID) {		
+	//constructor method, create AllRankingTasks obj with a task id.
+	public RankingReliability(String taskID) {		
 		Driver();
-		this.allAssessor(TaskID);
-		this.globalOrder(TaskID);
-		this.singleOrder(TaskID);
-		
+		this.allAssessors(taskID);
+		this.globalOrder(taskID);
+		this.singleOrder(taskID);
+		taskId = taskID;
 	}
 	
 	public void Driver(){
@@ -42,22 +50,22 @@ public class RankingReliability {
 		}
 	}
 	
-	public void allAssessor(String TaskID){
-		this.Ase = new ArrayList<>();
+	//set get all the assessors in this task and add them to allAssessors array.
+	public void allAssessors(String TaskID){
+		this.allAssessors = new ArrayList<>();
 		String sql1 = "select DISTINCT assessor_actor_id from answer where create_in_task_id='"+ TaskID +"' and rank is not null";
 		try {
-			Ase = tran_query_into_array(myStat.executeQuery(sql1), "assessor_actor_id");
+			allAssessors = tran_query_into_array(myStat.executeQuery(sql1), "assessor_actor_id");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	//Generate a map of assessor--->(assesee, rank).
-	
+	//For each assessor in a task, generate a map of assessor--->(assesee, rank).
 	public void singleOrder(String TaskID) {
 		this.single = new HashMap<>(); 
 		try {	
-			for(String ase : Ase){
+			for(String ase : allAssessors){
 				String sql2 = "select assessee_actor_id, rank from answer where create_in_task_id='"+ TaskID +"' and rank is not null and assessor_actor_id='" + ase + "'";
 				HashMap<String, String> temp = tran_query_into_map(myStat.executeQuery(sql2)); 
 				single.put(ase, temp);
@@ -67,56 +75,98 @@ public class RankingReliability {
 		}
 	}
 	
-	//Generate a map of globally assessee--->avg(rank).
-	
+	//Generate a map of globally assessee--->avg(rank) and put the hashmap globe. 
+	// The entries in globe are sorted here -> order by avg(rank) DESC
 	public void globalOrder(String TaskID){
-		this.globe = new HashMap<>();
-		String sql1 = "select assessee_actor_id, avg(rank) from answer where create_in_task_id='"+ TaskID +"' and rank is not null group by assessee_actor_id";
+		this.globe = new LinkedHashMap<>();
+		String sql1 = "select assessee_actor_id, avg(rank) from answer where create_in_task_id='"+ TaskID +"' and rank is not null group by assessee_actor_id order by avg(rank) DESC";
 		try {
 			globe = tran_query_into_map(myStat.executeQuery(sql1));
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		//System.out.println(globe);
+		
+		//sort all the assessees and put the assessee_ids in order (high to low)
+		this.globalRankingForTask = new ArrayList<String>();
+		for ( String key : globe.keySet() ) {
+			globalRankingForTask.add(key);
+		}
 	}
 	
 	//Get the reliability per Assessor.
-	
-	public double reliabPerAsr(String asr){
-		double reliability = 0;
-		HashMap<String, String> tmp = single.get(asr);
-		String[] tuple = tmp.keySet().toArray(new String[tmp.size()]);
+	//Alg. 1: percentage of matched tuples
+	//return the percentage of total tuples which agree with the global ranking.
+	public double getReliabilityForAssessorAlgo1(String assessorId){
+		double numMachingTuples = 0;
+		// get all the ranking records done by this assessor
+		HashMap<String, String> reviewRecords = single.get(assessorId); 
+		String[] assessees = reviewRecords.keySet().toArray(new String[reviewRecords.size()]);
 		
-		System.out.println(tmp);
-		
-		for(int i = 0; i < tuple.length-1; i++){
+		for(int i = 0; i < assessees.length-1; i++){
 			//System.out.println(tuple[i] + "--->" + globe.get(tuple[i]));
-			for(int j = i+1; j < tuple.length; j++){
+			for(int j = i+1; j < assessees.length; j++){
 
-				Integer a1_l = Integer.valueOf(tmp.get(tuple[i])), a2_l = Integer.valueOf(tmp.get(tuple[j]));
-				Double a1_g = Double.parseDouble(globe.get(tuple[i])), a2_g = Double.parseDouble(globe.get(tuple[j]));
+				Integer a1_l = Integer.valueOf(reviewRecords.get(assessees[i])), a2_l = Integer.valueOf(reviewRecords.get(assessees[j]));
+				Double a1_g = Double.parseDouble(globe.get(assessees[i])), a2_g = Double.parseDouble(globe.get(assessees[j]));
 				
 				if((a1_l > a2_l && a1_g > a2_g) || (a1_l < a2_l && a1_g < a2_g )){
-					reliability += 1;
+					numMachingTuples += 1;
 				}
 			}
 		}
 		
-		double allTuple = (tuple.length * (tuple.length-1))/2;
-		return reliability/allTuple;
+		double numTuplesTotal = (assessees.length * (assessees.length-1))/2;
+		return numMachingTuples/numTuplesTotal;
 	}
 	
-	//Generate reliability for the list of all assessors.
+	//Get the reliability per Assessor.
+	//Alg. 2: sum(diff rankings_matching ^2)/sum(diff ranking_all tuples ^2)
+	public double getReliabilityForAssessorAlgo2(String assessorId){
+		double diffRankingSquaresMachingTuples = 0, diffRankingSquaresAllTuples = 0;
+		// get all the ranking records done by this assessor
+		HashMap<String, String> reviewRecords = single.get(assessorId); 
+		String[] assessees = reviewRecords.keySet().toArray(new String[reviewRecords.size()]);
+		
+		for(int i = 0; i < assessees.length-1; i++){
+			//System.out.println(tuple[i] + "--->" + globe.get(tuple[i]));
+			for(int j = i+1; j < assessees.length; j++){
+
+				Integer a1_l = Integer.valueOf(reviewRecords.get(assessees[i])), a2_l = Integer.valueOf(reviewRecords.get(assessees[j]));
+				Double a1_g = Double.parseDouble(globe.get(assessees[i])), a2_g = Double.parseDouble(globe.get(assessees[j]));
+				
+				int diffRankingInGlobal = (globalRankingForTask.indexOf(assessees[i])) - (globalRankingForTask.indexOf(assessees[j]));
+				diffRankingSquaresAllTuples += diffRankingInGlobal * diffRankingInGlobal;
+				
+				if((a1_l > a2_l && a1_g > a2_g) || (a1_l < a2_l && a1_g < a2_g )){
+					diffRankingSquaresMachingTuples += diffRankingInGlobal * diffRankingInGlobal;
+				}
+			}
+		}
+		
+		return diffRankingSquaresMachingTuples/diffRankingSquaresAllTuples;
+	}
 	
-	public double avgReliabilityForAll(){
-		double reliab = 0, Ase_num = Ase.size();
-		for(String ase : Ase){
-			double tmp = reliabPerAsr(ase);
-			reliab += tmp;
-			System.out.println("Assessor: " + ase + " 's reliability is " + tmp);
+	//Generate average reliability for the list of all assessors in a task.
+	public double avgReliabilityForAll(int algoIndex){
+		double sumReliability = 0, assessorNum = allAssessors.size(), reliability = 0;
+		for(String assessor : allAssessors){
+			//get review reliability for current assessor
+			if (algoIndex == 1){
+				reliability = getReliabilityForAssessorAlgo1(assessor);
+			}
+			else{
+				reliability = getReliabilityForAssessorAlgo2(assessor);
+			}
+			//out put the reliability for each individual to a file.
+			// Format: taskid, assessorid, reliability, algorithm (1 or 2)
+			output.println(this.taskId + ',' + assessor + "," + reliability + "," + algoIndex);
+
+			//System.out.println("Assessor: " + assessor + " 's reliability is " + reliability);
+			//add the reliability of current assessor to the total.
+			sumReliability += reliability;
 		}	
-		System.out.println("Total reliability on average for ranking based system on task 'CV-00000015' is " + reliab/Ase_num);
-		return reliab/Ase_num;
+		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
+		return sumReliability/assessorNum;
 	} 
 	
 	//Helper function: turn resultSet into array given a attribute field.
@@ -133,8 +183,8 @@ public class RankingReliability {
 	}
 	
 	//Helper function: turn resultSet into map given a <key, value> set.	
-	private HashMap<String,String> tran_query_into_map(ResultSet result) {
-		HashMap<String, String> newMap = new HashMap<String, String>();
+	private LinkedHashMap<String,String> tran_query_into_map(ResultSet result) {
+		LinkedHashMap<String, String> newMap = new LinkedHashMap<String, String>();
 		try{	
 		   	while(result.next()){
 				newMap.put(result.getString(1), result.getString(2));
@@ -146,14 +196,27 @@ public class RankingReliability {
 	}
 	
 	public static void main(String[] args) {
-//		String TaskID = "CV-00000015";
-		AllRankingTasks allRank = new AllRankingTasks();
+
+		AllTasks allRank = new AllTasks();
+		
+		//create output stream
+		try{
+			File file = new File("ranking_output.csv");
+			output = new PrintStream(file);
+		} catch (IOException e) {
+		}
+		
+		// get all the task id with "ranking" as review type.
 		for(String s : allRank.rankTask){
 			RankingReliability x = new RankingReliability(s);
 			System.out.println("Task ID is: " + s);
-			x.avgReliabilityForAll();
+			//calculate the overall ranking reliability for this ranking task and out put. Parameter should either be 1 or 2 depending on which algo. to use
+			Double reliabilityAlgo1 = x.avgReliabilityForAll(1);
+			Double reliabilityAlog2 = x.avgReliabilityForAll(2);
+			
 			System.out.println("---------------------------------------------------------------------");
 		}
+		System.out.println("done.");
 	}
 
 }

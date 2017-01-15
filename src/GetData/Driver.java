@@ -8,7 +8,6 @@ public class Driver {
 	public static Statement myStat;
 	
 	public Driver(){
-
 		try{
 			String url = "jdbc:mysql://peerlogic.csc.ncsu.edu:3306/data_warehouse";
 			Connection myConn = (Connection) DriverManager.getConnection(url, "readonly", "readpassword");
@@ -19,7 +18,6 @@ public class Driver {
 	}
 	
 	public static void main(String[] args){
-		
 		try{
 			SortAssessorByTask AssessorByTask = new SortAssessorByTask();
 			SortAssesseeForEachAssessor AssesseeForAssessor = new SortAssesseeForEachAssessor();		
