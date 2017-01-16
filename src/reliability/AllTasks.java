@@ -54,12 +54,14 @@ public class AllTasks {
 			sql1 = "select DISTINCT create_in_task_id from answer where score is not null and create_in_task_id in (select id from task where app_name in "+ systemNames +" )";
 		}
 		
-		this.rankTask = new ArrayList<>();
+		
 		try {
 			if (taskType.equals("ranking")){
+				this.rankTask = new ArrayList<>();
 				rankTask = tran_query_into_array(myStat.executeQuery(sql1), "create_in_task_id");
 			}
 			else{//rating
+				this.rateTask = new ArrayList<>();
 				rateTask = tran_query_into_array(myStat.executeQuery(sql1), "create_in_task_id");
 			}
 		} catch (SQLException e) {
