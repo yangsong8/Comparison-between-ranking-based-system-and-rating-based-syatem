@@ -4,3 +4,5 @@ This project is about making comparison between the reliability of two peer logi
 The term 'reliability' refers to a given assessor's accuracy of assessment in one of the systems mentioned above. The souce code 'RankingReliability.java' and 'RatingReliability.java' demontrates the process of reasoning and deduction of the reliability of the two systems respectively. 
 
 Since it takes very much time to mine through all the data cllected for more than ten years in both system. The current conclusion is based on choosing representative task ids in both system. For future analysis, we would get the reliability per task and get the mean average reliability of the whole system.
+
+This [slides](https://docs.google.com/presentation/d/1gA9wGkrykkftEp6ibYa7aNO44SRLqaJfUllVFtHkgM8/edit#slide=id.p) introduces what we did so far.
