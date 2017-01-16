@@ -21,7 +21,8 @@ public class RatingReliability {
 	public ArrayList<String> allAssessors;
 	public LinkedHashMap<String, String> globe;
 	public HashMap<String, HashMap<String, String>> single;
-	private static PrintStream output;
+	private static PrintStream outputByIndividual;
+	private static PrintStream outputByTask;
 	private ArrayList<String> globalRankingForTask; 
 	private String taskId;
 	private AllTasks allRank;
@@ -31,7 +32,7 @@ public class RatingReliability {
 		this.allAssessor(taskId);
 		this.globalOrder(taskId);
 		this.singleOrder(taskId);
-		taskId = taskId;
+		this.taskId = taskId;
 	}
 
 	public void Driver(){
@@ -181,12 +182,13 @@ public class RatingReliability {
 			if(!Double.isNaN(reliability)){
 				//out put the reliability for each individual to a file.
 				// Format: taskid, assessorid, reliability, algorithm (1 or 2)
-				output.println(this.taskId + ',' + assessor + "," + reliability + "," + algoIndex);
+				outputByIndividual.println(this.taskId + ',' + assessor + "," + reliability + "," + algoIndex);
 				sumReliability += reliability;
 				assessorNum += 1; //assessorNum counts the assessors who did more than 1 review.
 			}
 		}	
 		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
+		outputByTask.println(this.taskId + ',' + allAssessors.size() + ',' + sumReliability/assessorNum);
 		return sumReliability/assessorNum;
 	} 
 	
@@ -223,8 +225,10 @@ public class RatingReliability {
 		
 		//create output stream
 		try{
-			File file = new File("rating_output.csv");
-			output = new PrintStream(file);
+			File fileByIndividual = new File("rating_output.csv");
+			outputByIndividual = new PrintStream(fileByIndividual);
+			File fileByTask = new File("rating_output_by_task.csv");
+			outputByTask = new PrintStream(fileByTask);
 		} catch (IOException e) {
 		}
 		
