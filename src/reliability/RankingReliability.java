@@ -109,7 +109,7 @@ public class RankingReliability {
 				Integer a1_l = Integer.valueOf(reviewRecords.get(assessees[i])), a2_l = Integer.valueOf(reviewRecords.get(assessees[j]));
 				Double a1_g = Double.parseDouble(globe.get(assessees[i])), a2_g = Double.parseDouble(globe.get(assessees[j]));
 				
-				if((a1_l > a2_l && a1_g > a2_g) || (a1_l < a2_l && a1_g < a2_g )){
+				if((a1_l > a2_l && a1_g >= a2_g) || (a1_l < a2_l && a1_g <= a2_g )){
 					numMachingTuples += 1;
 				}
 			}
