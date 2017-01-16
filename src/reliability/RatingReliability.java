@@ -188,7 +188,7 @@ public class RatingReliability {
 			}
 		}	
 		System.out.println("Total reliability on average for ranking based system on this task is " + sumReliability/assessorNum);
-		outputByTask.println(this.taskId + ',' + allAssessors.size() + ',' + sumReliability/assessorNum);
+		outputByTask.println(this.taskId + ',' + allAssessors.size() + ',' + sumReliability/assessorNum + "," + algoIndex);
 		return sumReliability/assessorNum;
 	} 
 	
